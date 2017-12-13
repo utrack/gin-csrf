@@ -19,6 +19,8 @@ const (
 
 var defaultIgnoreMethods = []string{"GET", "HEAD", "OPTIONS"}
 
+var defaultIgnorePaths = []string{}
+
 var defaultErrorFunc = func(c *gin.Context) {
 	panic(errors.New("CSRF token mismatch"))
 }
@@ -43,6 +45,7 @@ var defaultTokenGetter = func(c *gin.Context) string {
 type Options struct {
 	Secret        string
 	IgnoreMethods []string
+	IgnorePaths   []string
 	ErrorFunc     gin.HandlerFunc
 	TokenGetter   func(c *gin.Context) string
 }
@@ -71,6 +74,7 @@ func inArray(arr []string, value string) bool {
 // Middleware validates CSRF token.
 func Middleware(options Options) gin.HandlerFunc {
 	ignoreMethods := options.IgnoreMethods
+	ignorePaths := options.IgnorePaths
 	errorFunc := options.ErrorFunc
 	tokenGetter := options.TokenGetter
 
@@ -86,11 +90,20 @@ func Middleware(options Options) gin.HandlerFunc {
 		tokenGetter = defaultTokenGetter
 	}
 
+	if ignorePaths == nil {
+		ignorePaths = defaultIgnorePaths
+	}
+
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		c.Set(csrfSecret, options.Secret)
 
 		if inArray(ignoreMethods, c.Request.Method) {
+			c.Next()
+			return
+		}
+
+		if inArray(ignorePaths, c.Request.URL.Path) {
 			c.Next()
 			return
 		}
