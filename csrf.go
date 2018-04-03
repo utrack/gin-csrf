@@ -45,6 +45,7 @@ type Options struct {
 	IgnoreMethods []string
 	ErrorFunc     gin.HandlerFunc
 	TokenGetter   func(c *gin.Context) string
+	IgnoreRoutes  []string
 }
 
 func tokenize(secret, salt string) string {
@@ -73,6 +74,7 @@ func Middleware(options Options) gin.HandlerFunc {
 	ignoreMethods := options.IgnoreMethods
 	errorFunc := options.ErrorFunc
 	tokenGetter := options.TokenGetter
+	ignoreRoutes := options.IgnoreRoutes
 
 	if ignoreMethods == nil {
 		ignoreMethods = defaultIgnoreMethods
@@ -89,6 +91,11 @@ func Middleware(options Options) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		session := sessions.Default(c)
 		c.Set(csrfSecret, options.Secret)
+
+		if inArray(ignoreRoutes, c.Request.URL.Path) {
+			c.Next()
+			return
+		}
 
 		if inArray(ignoreMethods, c.Request.Method) {
 			c.Next()
