@@ -17,7 +17,7 @@ const (
 	csrfToken  = "csrfToken"
 )
 
-var defaultIgnoreMethods = []string{"GET", "HEAD", "OPTIONS"}
+var defaultIgnoreMethods = []string{"GET", "HEAD", "OPTIONS", "TRACE"}
 
 var defaultErrorFunc = func(c *gin.Context) {
 	panic(errors.New("CSRF token mismatch"))
